@@ -8,6 +8,7 @@ import numpy as np
 import socketio
 import eventlet
 import eventlet.wsgi
+import cv2
 from PIL import Image
 from flask import Flask
 from io import BytesIO
@@ -62,7 +63,7 @@ def telemetry(sid, data):
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
-        
+        image_array = cv2.GaussianBlur(image_array, (5, 5), 0)
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
         throttle = controller.update(float(speed))

@@ -1,63 +1,83 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+
 import pickle
-import cv2
 import numpy as np
-import matplotlib.image as mpimg
+import cv2
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda,Dropout
 from keras.layers import Cropping2D, Conv2D
 from keras.optimizers import Adam
+from keras.models import load_model
 from keras import backend as K
-from utils import get_data
-from dataset import create_dataset
-
-
+from utils import get_data, benchmark, generate_shadow, random_shift
+from dataset import create_dataset, DrivingDataset, dataset
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-
 
 def create_model():
     model = Sequential()
     model.add(Cropping2D(cropping=((70,25), (0,0)), input_shape=(160,320,3)))
     model.add(Lambda(lambda x: (x / 255.0) - 0.5))
     #model.add(Lambda(lambda x: (x - K.constant([123.68, 116.779, 103.939]))/K.constant([58.393, 57.12, 57.375])))
-    model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu', padding="same"))
-    model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu', padding="same"))
-    model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu', padding="same"))
+    model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='elu', padding="same"))
+    model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='elu', padding="same"))
+    model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='elu', padding="same"))
     model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
     model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
     model.add(Flatten())
+    model.add(Dropout(0.5))
     model.add(Dense(100))
-    model.add(Dropout(0.6))
+    model.add(Dropout(0.5))
     model.add(Dense(50))
     model.add(Dense(10))
     model.add(Dense(1))
     return model
-    
+
+def example_augument():
+    shadow = cv2.cvtColor(cv2.imread(r'examples\no_shadows.jpg'), cv2.COLOR_BGR2RGB)
+    shadow = cv2.cvtColor(generate_shadow( shadow),  cv2.COLOR_RGB2BGR)
+    #shadow = np.fliplr(shadow)
+    #shadow = cv2.GaussianBlur(shadow, (5, 5), 0)
+    shadow,y = random_shift(shadow)
+    cv2.imwrite(r'examples\shadows.jpg', shadow) 
     
 def main():
+    example_augument()
+    
     images = []
     measurements = []
     batch_size = 64
     num_rows = 0
-    num_rows, images, measurements = get_data('images')
-    #print(len(measurements), len(images))
-    #print("Total number of rows: " + str(num_rows))
+    save_file = 'model.h5'
+   
+    print('Process csv files')
+    num_rows, images, measurements = get_data('data')
+    print('Number of rows: ' + str(num_rows))
+    print('Prepare datasets')
     train_dataset, valid_dataset, test_dataset = create_dataset(images, measurements, batch_size)
+        
+    print('Create model')
+   
     model = create_model()
     stopping_callback = EarlyStopping(monitor='val_loss', patience=3 ,restore_best_weights=True)
-    save_file = 'model.h5'
+    
     checkpoint_callback = ModelCheckpoint(
         filepath=save_file,
         save_weights_only=False,
         monitor='val_loss',
         mode='min',
         save_best_only=True)
-    opt = Adam(learning_rate=0.001)
+    opt = Adam(learning_rate=0.0009)
     model.compile(loss='mse', metrics=['accuracy'], optimizer=opt)
     
-    model.fit( train_dataset, validation_data=valid_dataset, epochs=30, verbose=2, callbacks=[checkpoint_callback, stopping_callback ],use_multiprocessing=True, workers=12) 
-    
+    print('Train model')
+    model.fit( train_dataset, validation_data=valid_dataset, epochs=20, verbose=2, callbacks=[checkpoint_callback, stopping_callback ],use_multiprocessing=True, workers=12) 
    
+    print('Running test dataset')
+    score, acc = model.evaluate(test_dataset, batch_size=batch_size,  verbose = 0)
+    print('Test score:', score)
+    print('Test accuracy:', acc)
         
 if __name__ == "__main__":
     main()
