@@ -23,8 +23,8 @@ def random_shift(image, yi=0):
         M = np.float32([[1, 0, value ], [0, 1, 0]])
         #add random noise
         yi -= (value/20)* random.random() * 0.1
-    elif random.random() < 0.5:
-        M = np.float32([[1, 0, 0], [0, 1, np.random.randint(1,20)]])
+    #elif random.random() < 0.5:
+    #    M = np.float32([[1, 0, 0], [0, 1, np.random.randint(-20,20)]])
     else:
         return image, yi
         
