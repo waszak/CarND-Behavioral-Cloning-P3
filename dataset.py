@@ -44,7 +44,7 @@ class DrivingDatasetGenerator(keras.utils.Sequence):
     def __getitem__(self, idx):
         
         idxes = self.idx[idx * self.batch_size:(idx + 1) * self.batch_size]
-
+        idxes = shuffle(idxes)
         batch_x = []
         batch_y = []
         
@@ -69,13 +69,13 @@ def generator(x, y, batch_size, augment=False, repeat=1):
 
 def create_dataset(images, measurements, batch_size, repeat_train_data=1):
     images, measurements = shuffle(images, measurements)
-    train_images = images[:int(0.80 * len(images))]
-    test_images = images[int(0.80 * len(images)): int(0.90 * len(images))]
-    valid_images = images[int(0.90 * len(images)):]
+    train_images = images[:int(0.70 * len(images))]
+    test_images = images[int(0.70 * len(images)): int(0.80 * len(images))]
+    valid_images = images[int(0.80 * len(images)):]
     
-    train_measurements = measurements[:int(0.80 * len(measurements))]
-    test_measurements = measurements[int(0.80 * len(measurements)): int(0.90 * len(measurements))]
-    valid_measurements = measurements[int(0.90 * len(measurements)):]
+    train_measurements = measurements[:int(0.70 * len(measurements))]
+    test_measurements = measurements[int(0.70 * len(measurements)): int(0.80 * len(measurements))]
+    valid_measurements = measurements[int(0.80 * len(measurements)):]
     
     train_dataset = generator(train_images, train_measurements, batch_size, True, repeat_train_data)
     valid_dataset = generator(valid_images, valid_measurements, batch_size)

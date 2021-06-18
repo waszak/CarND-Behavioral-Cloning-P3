@@ -20,10 +20,10 @@ def benchmark(dataset):
 #when we shift image left or right we should also change steering by small number
 def random_shift(image, yi=0):
     if random.random() < 0.5:
-        value = np.random.randint(-20,20)
+        value = np.random.randint(-50,50)
         M = np.float32([[1, 0, value ], [0, 1, 0]])
         #add random noise
-        yi -= (value/20)* random.random() * 0.1
+        yi += (value/25)* random.random() * 0.1
     #elif random.random() < 0.5:
     #    M = np.float32([[1, 0, 0], [0, 1, np.random.randint(-20,20)]])
     else:

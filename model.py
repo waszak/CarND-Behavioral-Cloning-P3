@@ -7,7 +7,7 @@ import cv2
 import gdown
 
 from keras.models import Sequential
-from keras.layers import Flatten, Dense, Lambda,Dropout
+from keras.layers import Flatten, Dense, Lambda,Dropout, BatchNormalization
 from keras.layers import Cropping2D, Conv2D
 from keras.optimizers import Adam
 from keras.models import load_model
@@ -19,18 +19,22 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 def create_model():
     model = Sequential()
     model.add(Cropping2D(cropping=((70,25), (0,0)), input_shape=(160,320,3)))
-    model.add(Lambda(lambda x: (x / 127.5) - 1))
-    #model.add(Lambda(lambda x: (x - K.constant([123.68, 116.779, 103.939]))/K.constant([58.393, 57.12, 57.375])))
+    #model.add(Lambda(lambda x: (x / 127.5) - 1))
+    model.add(Lambda(lambda x: (x - K.constant([123.68, 116.779, 103.939]))/K.constant([58.393, 57.12, 57.375])))
     model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu', padding="same"))
+    model.add(BatchNormalization())
     model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu', padding="same"))
     model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu', padding="same"))
+    model.add(BatchNormalization())
     model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
     model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
+    model.add(BatchNormalization())
     model.add(Flatten())
-    model.add(Dropout(0.5))
+    model.add(Dropout(0.8))
     model.add(Dense(100))
     model.add(Dropout(0.5))
     model.add(Dense(50))
+    model.add(Dropout(0.5))
     model.add(Dense(10))
     model.add(Dense(1))
     return model
@@ -48,10 +52,10 @@ def main():
     
     images = []
     measurements = []
-    batch_size = 128
+    batch_size = 64
     num_rows = 0
     epochs = 15
-    repeat_train_data = 4
+    repeat_train_data = 2
     save_file = 'model.h5'
     download_folder ='/opt'
     data_folder = '/opt/data'
@@ -77,7 +81,7 @@ def main():
    
     model = create_model()
     
-    stopping_callback = EarlyStopping(monitor='val_loss', patience=3 )#,restore_best_weights=True
+    stopping_callback = EarlyStopping(monitor='val_loss', patience=10 )#,restore_best_weights=True
     
     checkpoint_callback = ModelCheckpoint(
         filepath=save_file,
@@ -87,11 +91,11 @@ def main():
         save_best_only=True)
    
     
-    opt = Adam()
+    opt = Adam(lr=1e-5)#0.0001
     model.compile(loss='mse', metrics=['accuracy'], optimizer=opt)
     
     print('Train model')
-    model.fit_generator(generator=train_dataset, steps_per_epoch=len(train_dataset), epochs=epochs, validation_data=valid_dataset,  callbacks=[checkpoint_callback, stopping_callback ] , validation_steps = len(valid_dataset), verbose=1,  use_multiprocessing=True,workers=6 ) #validation_data=validation_generator, use_multiprocessing=True,workers=6 
+    model.fit_generator(generator=train_dataset, steps_per_epoch=len(train_dataset), epochs=epochs, validation_data=valid_dataset,  callbacks=[checkpoint_callback, stopping_callback ] , validation_steps = len(valid_dataset), verbose=1) #validation_data=validation_generator, use_multiprocessing=True,workers=6 
     
     #model.fit( train_dataset, validation_data=valid_dataset, epochs=epochs,  callbacks=[checkpoint_callback, stopping_callback ] , verbose=2,use_multiprocessing=True, workers=12) 
  
