@@ -12,8 +12,8 @@ from keras.optimizers import Adam
 from keras.models import load_model
 from keras import backend as K
 from utils import get_data, benchmark, generate_shadow, random_shift
-from dataset import create_dataset, DrivingDataset, dataset
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from dataset import create_dataset, DrivingDatasetGenerator
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 def create_model():
     model = Sequential()
@@ -43,13 +43,14 @@ def example_augument():
     cv2.imwrite(r'examples\shadows.jpg', shadow) 
     
 def main():
-    example_augument()
+    #example_augument()
     
     images = []
     measurements = []
     batch_size = 64
     num_rows = 0
     epochs = 50
+    repeat_train_data = 1
     save_file = 'model.h5'
     data_folder = 'data'
    
@@ -57,12 +58,13 @@ def main():
     num_rows, images, measurements = get_data(data_folder)
     print('Number of rows: ' + str(num_rows))
     print('Prepare datasets')
-    train_dataset, valid_dataset, test_dataset = create_dataset(images, measurements, batch_size)
-        
+    train_dataset, valid_dataset, test_dataset = create_dataset(images, measurements, batch_size, repeat_train_data)
+    print('Train dataset size', train_dataset.total_size())    
     print('Create model')
    
     model = create_model()
-    stopping_callback = EarlyStopping(monitor='val_loss', patience=3 ,restore_best_weights=True)
+    
+    stopping_callback = EarlyStopping(monitor='val_loss', patience=3 )#,restore_best_weights=True
     
     checkpoint_callback = ModelCheckpoint(
         filepath=save_file,
@@ -70,16 +72,16 @@ def main():
         monitor='val_loss',
         mode='min',
         save_best_only=True)
-    opt = Adam(learning_rate=0.0009)
+   
+    
+    opt = Adam()
     model.compile(loss='mse', metrics=['accuracy'], optimizer=opt)
     
     print('Train model')
-    model.fit( train_dataset, validation_data=valid_dataset, epochs=epochs, verbose=2, callbacks=[checkpoint_callback, stopping_callback ],use_multiprocessing=True, workers=12) 
-   
-    print('Running test dataset')
-    score, acc = model.evaluate(test_dataset, batch_size=batch_size,  verbose = 0)
-    print('Test score:', score)
-    print('Test accuracy:', acc)
+    model.fit_generator(generator=train_dataset, steps_per_epoch=len(train_dataset), validation_data=valid_dataset, validation_steps = len(valid_dataset) ) #validation_data=validation_generator, use_multiprocessing=True,workers=6 
+    
+    #model.fit( train_dataset, validation_data=valid_dataset, epochs=epochs,  callbacks=[checkpoint_callback, stopping_callback ] , verbose=2,use_multiprocessing=True, workers=12) 
+ 
         
 if __name__ == "__main__":
     main()
