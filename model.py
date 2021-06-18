@@ -49,10 +49,12 @@ def main():
     measurements = []
     batch_size = 64
     num_rows = 0
+    epochs = 50
     save_file = 'model.h5'
+    data_folder = 'data'
    
     print('Process csv files')
-    num_rows, images, measurements = get_data('data')
+    num_rows, images, measurements = get_data(data_folder)
     print('Number of rows: ' + str(num_rows))
     print('Prepare datasets')
     train_dataset, valid_dataset, test_dataset = create_dataset(images, measurements, batch_size)
@@ -72,7 +74,7 @@ def main():
     model.compile(loss='mse', metrics=['accuracy'], optimizer=opt)
     
     print('Train model')
-    model.fit( train_dataset, validation_data=valid_dataset, epochs=20, verbose=2, callbacks=[checkpoint_callback, stopping_callback ],use_multiprocessing=True, workers=12) 
+    model.fit( train_dataset, validation_data=valid_dataset, epochs=epochs, verbose=2, callbacks=[checkpoint_callback, stopping_callback ],use_multiprocessing=True, workers=12) 
    
     print('Running test dataset')
     score, acc = model.evaluate(test_dataset, batch_size=batch_size,  verbose = 0)
