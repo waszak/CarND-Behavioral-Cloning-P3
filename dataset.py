@@ -35,7 +35,7 @@ class DrivingDatasetGenerator(keras.utils.Sequence):
             self.idx.extend(idx)
     
     def __len__(self):
-        return math.ceil((len(self.idx)) / self.batch_size)
+        return math.ceil((len(self.idx)) / self.batch_size) - 1
     
     def total_size(self):
         return len(self.idx)
