@@ -4,6 +4,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import pickle
 import numpy as np
 import cv2
+import gdown
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda,Dropout
@@ -47,12 +48,24 @@ def main():
     
     images = []
     measurements = []
-    batch_size = 64
+    batch_size = 128
     num_rows = 0
-    epochs = 50
-    repeat_train_data = 1
+    epochs = 15
+    repeat_train_data = 4
     save_file = 'model.h5'
-    data_folder = 'data'
+    download_folder ='/opt'
+    data_folder = '/opt/data'
+    url = 'https://drive.google.com/u/0/uc?id=1IsUPKgV2r4sni4A1DiLco9gfqDOQsCdX&export=download'
+    """
+    if not os.path.exists(download_folder):
+        os.makedirs(download_folder)
+    
+    if not os.path.exists(data_folder):
+        gdown.download(url, os.path.join(download_folder, 'data.zip'), quiet=False)
+        print('unpack data')
+        return
+    """    
+    
    
     print('Process csv files')
     num_rows, images, measurements = get_data(data_folder)
@@ -78,7 +91,7 @@ def main():
     model.compile(loss='mse', metrics=['accuracy'], optimizer=opt)
     
     print('Train model')
-    model.fit_generator(generator=train_dataset, steps_per_epoch=len(train_dataset), validation_data=valid_dataset, validation_steps = len(valid_dataset) ) #validation_data=validation_generator, use_multiprocessing=True,workers=6 
+    model.fit_generator(generator=train_dataset, steps_per_epoch=len(train_dataset), epochs=epochs, validation_data=valid_dataset,  callbacks=[checkpoint_callback, stopping_callback ] , validation_steps = len(valid_dataset), verbose=1,  use_multiprocessing=True,workers=6 ) #validation_data=validation_generator, use_multiprocessing=True,workers=6 
     
     #model.fit( train_dataset, validation_data=valid_dataset, epochs=epochs,  callbacks=[checkpoint_callback, stopping_callback ] , verbose=2,use_multiprocessing=True, workers=12) 
  

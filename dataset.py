@@ -41,12 +41,13 @@ class DrivingDatasetGenerator(keras.utils.Sequence):
         return len(self.idx)
    
     def __getitem__(self, idx):
-        idx = self.idx[idx * self.batch_size:(idx + 1) * self.batch_size]
+        
+        idxes = self.idx[idx * self.batch_size:(idx + 1) * self.batch_size]
 
         batch_x = []
         batch_y = []
         
-        for i in range(len(idx)):
+        for i in range(len(idxes)):
             img = np.asarray(Image.open(self.x[i]))
             yi = self.y[i]
             img = cv2.GaussianBlur(img, (5, 5), 0)
@@ -57,8 +58,9 @@ class DrivingDatasetGenerator(keras.utils.Sequence):
                 if random.random() <0.5:
                      yi = -yi
                      img = np.fliplr(img)
-                     
-        np.array(batch_x) ,  np.array(batch_y) 
+                batch_x.append(img)
+                batch_y.append(yi)     
+        return np.array(batch_x) ,  np.array(batch_y) 
 
 
 def generator(x, y, batch_size, augment=False, repeat=1):
