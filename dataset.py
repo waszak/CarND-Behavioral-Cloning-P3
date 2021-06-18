@@ -29,10 +29,11 @@ class DrivingDatasetGenerator(keras.utils.Sequence):
     
     def on_epoch_end(self):
         idx = [ i for i in range(len(self.x))]
-        self.idx = []
+        idxes = []
         for i in range(self.repeat):
             idx = shuffle(idx)
-            self.idx.extend(idx)
+            idxes.extend(idx)
+        self.idx = idxes
     
     def __len__(self):
         return math.ceil((len(self.idx)) / self.batch_size) - 1
@@ -58,8 +59,8 @@ class DrivingDatasetGenerator(keras.utils.Sequence):
                 if random.random() <0.5:
                      yi = -yi
                      img = np.fliplr(img)
-                batch_x.append(img)
-                batch_y.append(yi)     
+            batch_x.append(img)
+            batch_y.append(yi)     
         return np.array(batch_x) ,  np.array(batch_y) 
 
 
