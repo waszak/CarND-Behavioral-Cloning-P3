@@ -57,21 +57,22 @@ def generate_shadow(image):
     hls[:,:,1][mask[:, :, 0] == 255] = hls[:, : , 1][mask[:,:,0] == 255] *  shadow_ratio 
     return cv2.cvtColor(hls, cv2.COLOR_HLS2RGB) 
  
- 
 def get_data(path):
     num_rows = 0 
     images = []
     measurements = []
     for directory in os.listdir(path):
-        csv_dir = path+'\\'+directory
-        with open(csv_dir+'\\driving_log.csv') as csvfile:
+        csv_dir = os.path.join( path, directory)
+        csv_path = os.path.join(csv_dir, 'driving_log.csv')
+        with open(csv_path) as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
                 if row[0] =='center':
                     #skip header if exists
                     continue 
-                
-                paths= [ csv_dir+'\\IMG\\'+os.path.basename(x) for x in row[0:3]]
+               
+        
+                paths= [ os.path.join( os.path.join(csv_dir,'IMG'), os.path.basename(x.replace('\\',os.sep))) for x in row[0:3]]
                 #print(paths)
                 images.extend(paths)
                 shift = 0.25
@@ -81,5 +82,6 @@ def get_data(path):
                 num_rows +=3
                 
     return num_rows, images, measurements
+
 
      

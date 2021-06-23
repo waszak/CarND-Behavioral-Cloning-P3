@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 
 from keras.models import Sequential
-from keras.layers import Flatten, Dense, Lambda,Dropout
+from keras.layers import Flatten, Dense, Lambda,Dropout,BatchNormalization
 from keras.layers import Cropping2D, Conv2D
 from keras.optimizers import Adam
 from keras.models import load_model
@@ -18,19 +18,22 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 def create_model():
     model = Sequential()
     model.add(Cropping2D(cropping=((70,25), (0,0)), input_shape=(160,320,3)))
-    model.add(Lambda(lambda x: (x / 127.5) - 1))
-    #model.add(Lambda(lambda x: (x - K.constant([123.68, 116.779, 103.939]))/K.constant([58.393, 57.12, 57.375])))
+    #model.add(Lambda(lambda x: (x / 127.5) - 1))
+    model.add(Lambda(lambda x: (x - K.constant([123.68, 116.779, 103.939]))/K.constant([58.393, 57.12, 57.375])))
     model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu', padding="same"))
     model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu', padding="same"))
     model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu', padding="same"))
+    model.add(BatchNormalization())
     model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
     model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
     model.add(Flatten())
     model.add(Dropout(0.5))
-    model.add(Dense(100))
+    model.add(BatchNormalization())
+    model.add(Dense(100, activation='elu'))
     model.add(Dropout(0.5))
-    model.add(Dense(50))
-    model.add(Dense(10))
+    model.add(BatchNormalization())
+    model.add(Dense(50, activation='elu'))
+    model.add(Dense(10, activation='elu'))
     model.add(Dense(1))
     return model
 
@@ -62,7 +65,7 @@ def main():
     print('Create model')
    
     model = create_model()
-    stopping_callback = EarlyStopping(monitor='val_loss', patience=3 ,restore_best_weights=True)
+    stopping_callback = EarlyStopping(monitor='val_loss', patience=5 ,restore_best_weights=True)
     
     checkpoint_callback = ModelCheckpoint(
         filepath=save_file,
