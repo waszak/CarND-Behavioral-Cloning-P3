@@ -14,11 +14,12 @@ from keras import backend as K
 from utils import get_data, benchmark, generate_shadow, random_shift
 from dataset import create_dataset, DrivingDataset, data_augmentation
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+import matplotlib.pyplot as plt
 
 def create_model():
     model = Sequential()
-    model.add(Lambda(lambda x:data_augmentation(x), input_shape=(160,320,3)))
-    model.add(Cropping2D(cropping=((70,25), (0,0))))
+    #model.add(Lambda(lambda x:data_augmentation(x), input_shape=(160,320,3)))
+    model.add(Cropping2D(cropping=((70,25), (0,0)), input_shape=(160,320,3)))
     #model.add(Lambda(lambda x: (x / 127.5) - 1))
     model.add(Lambda(lambda x: (x - K.constant([123.68, 116.779, 103.939]))/K.constant([58.393, 57.12, 57.375])))
     model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu', padding="same"))
@@ -56,6 +57,7 @@ def main():
     epochs = 50
     save_file = 'model.h5'
     data_folder = 'data'
+    save_plot = os.path.join('examples', 'loss.png')
    
     print('Process csv files')
     num_rows, images, measurements = get_data(data_folder)
@@ -78,8 +80,18 @@ def main():
     model.compile(loss='mse', metrics=['accuracy'], optimizer=opt)
     
     print('Train model')
-    model.fit( train_dataset, validation_data=valid_dataset, epochs=epochs, verbose=2, callbacks=[checkpoint_callback, stopping_callback ],use_multiprocessing=True, workers=12) 
+    history = model.fit( train_dataset, validation_data=valid_dataset, epochs=epochs, verbose=2, callbacks=[checkpoint_callback, stopping_callback ],use_multiprocessing=True, workers=24) 
    
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model mean squared error loss')
+    plt.ylabel('mean squared error loss')
+    plt.xlabel('epoch')
+    plt.legend(['training set', 'validation set'], loc='upper right')
+    #plt.show()
+    plt.savefig(save_plot)
+    #plt.close(fig)
+
     print('Running test dataset')
     score, acc = model.evaluate(test_dataset, batch_size=batch_size,  verbose = 0)
     print('Test score:', score)

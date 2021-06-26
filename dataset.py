@@ -73,9 +73,9 @@ def create_dataset(images, measurements, batch_size):
     test_measurements = measurements[int(0.80 * len(measurements)): int(0.90 * len(measurements))]
     valid_measurements = measurements[int(0.90 * len(measurements)):]
     
-    train_dataset = generator(train_images, train_measurements, batch_size, True)
-    valid_dataset = generator(valid_images, valid_measurements, batch_size)
-    test_dataset =  generator(test_images, test_measurements, batch_size)
+    train_dataset = DrivingDataset(train_images, train_measurements, batch_size, True)
+    valid_dataset = DrivingDataset(valid_images, valid_measurements, batch_size)
+    test_dataset =  DrivingDataset(test_images, test_measurements, batch_size)
     return train_dataset, valid_dataset, test_dataset
 
 def parse_function(filename, label):
