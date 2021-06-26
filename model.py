@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 import cv2
 #import gdown
-
+import matplotlib.pyplot as plt
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda,Dropout, BatchNormalization
 from keras.layers import Cropping2D, Conv2D
@@ -52,13 +52,14 @@ def main():
     
     images = []
     measurements = []
-    batch_size = 64
+    batch_size = 32
     num_rows = 0
-    epochs = 15
+    epochs = 30
     repeat_train_data = 1
     save_file = 'model.h5'
     #download_folder ='/opt'
-    data_folder = 'data'
+    data_folder = '/opt/data'
+    save_plot = os.path.join('examples', 'loss.png')
     url = 'https://drive.google.com/u/0/uc?id=1oAdtoz2emGilDOa-vAxGppVPj8HLukuU&export=download'
     """
     if not os.path.exists(download_folder):
@@ -95,7 +96,7 @@ def main():
     model.compile(loss='mse', metrics=['accuracy'], optimizer=opt)
     
     print('Train model')
-    model.fit_generator(generator=train_dataset, steps_per_epoch=len(train_dataset), epochs=epochs, validation_data=valid_dataset,  callbacks=[checkpoint_callback, stopping_callback ] , validation_steps = len(valid_dataset), verbose=2, use_multiprocessing=True, workers=6 ) #validation_data=validation_generator, use_multiprocessing=True,workers=6 
+    history = model.fit_generator(generator=train_dataset, steps_per_epoch=len(train_dataset), epochs=epochs, validation_data=valid_dataset,  callbacks=[checkpoint_callback, stopping_callback ] , validation_steps = len(valid_dataset), verbose=2) #validation_data=validation_generator, use_multiprocessing=True,workers=6 
     
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])

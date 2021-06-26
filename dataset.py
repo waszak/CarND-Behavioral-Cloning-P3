@@ -28,6 +28,9 @@ class DrivingDatasetGenerator(keras.utils.Sequence):
     
         self.on_epoch_end()
     
+    def __del__(self):
+        pass
+    
     def on_epoch_end(self):
         idx = [ i for i in range(len(self.x))]
         idxes = []
@@ -85,8 +88,12 @@ def create_dataset(images, measurements, batch_size, repeat_train_data=1):
 
 def data_augmentation(x):
     x = tf.image.random_brightness(x, 0.10)
-    x = tf.image.random_hue(x, 0.1) 
-    x = tf.image.random_saturation(x, 0.7, 1.3)
+    hue = lambda x: tf.image.random_hue(x, 0.5)
+    x = tf.map_fn(hue, x)
+    sat = lambda x: tf.image.random_saturation(x, 0.7, 1.3)
+    x = tf.map_fn(sat, x)
+    #x = tf.image.random_hue(x, 0.1) 
+    #x = tf.image.random_saturation(x, 0.7, 1.3)
     x = tf.image.random_contrast(x, 0.8, 1.2)
     return x
 
