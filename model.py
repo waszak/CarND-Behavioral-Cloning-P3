@@ -59,7 +59,7 @@ def main():
     save_file = 'model.h5'
     #download_folder ='/opt'
     data_folder = 'data'
-    url = 'https://drive.google.com/u/0/uc?id=1IsUPKgV2r4sni4A1DiLco9gfqDOQsCdX&export=download'
+    url = 'https://drive.google.com/u/0/uc?id=1oAdtoz2emGilDOa-vAxGppVPj8HLukuU&export=download'
     """
     if not os.path.exists(download_folder):
         os.makedirs(download_folder)
