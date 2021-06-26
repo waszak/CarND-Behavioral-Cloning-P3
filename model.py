@@ -4,7 +4,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import pickle
 import numpy as np
 import cv2
-import gdown
+#import gdown
 
 from keras.models import Sequential
 from keras.layers import Flatten, Dense, Lambda,Dropout, BatchNormalization
@@ -13,29 +13,29 @@ from keras.optimizers import Adam
 from keras.models import load_model
 from keras import backend as K
 from utils import get_data, benchmark, generate_shadow, random_shift
-from dataset import create_dataset, DrivingDatasetGenerator
+from dataset import create_dataset, DrivingDatasetGenerator, data_augmentation
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 def create_model():
     model = Sequential()
-    model.add(Cropping2D(cropping=((70,25), (0,0)), input_shape=(160,320,3)))
+    model.add(Lambda(lambda x:data_augmentation(x), input_shape=(160,320,3)))
+    model.add(Cropping2D(cropping=((70,25), (0,0))))#input_shape=(160,320,3))
     #model.add(Lambda(lambda x: (x / 127.5) - 1))
     model.add(Lambda(lambda x: (x - K.constant([123.68, 116.779, 103.939]))/K.constant([58.393, 57.12, 57.375])))
     model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu', padding="same"))
-    model.add(BatchNormalization())
     model.add(Conv2D(36, (5, 5), strides=(2, 2), activation='relu', padding="same"))
     model.add(Conv2D(48, (5, 5), strides=(2, 2), activation='relu', padding="same"))
     model.add(BatchNormalization())
     model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
     model.add(Conv2D(64, (3, 3), activation='relu', padding="same"))
-    model.add(BatchNormalization())
     model.add(Flatten())
-    model.add(Dropout(0.8))
-    model.add(Dense(100))
     model.add(Dropout(0.5))
-    model.add(Dense(50))
+    model.add(BatchNormalization())
+    model.add(Dense(100, activation='elu'))
     model.add(Dropout(0.5))
-    model.add(Dense(10))
+    model.add(BatchNormalization())
+    model.add(Dense(50, activation='elu'))
+    model.add(Dense(10, activation='elu'))
     model.add(Dense(1))
     return model
 
@@ -55,10 +55,10 @@ def main():
     batch_size = 64
     num_rows = 0
     epochs = 15
-    repeat_train_data = 2
+    repeat_train_data = 1
     save_file = 'model.h5'
-    download_folder ='/opt'
-    data_folder = '/opt/data'
+    #download_folder ='/opt'
+    data_folder = 'data'
     url = 'https://drive.google.com/u/0/uc?id=1IsUPKgV2r4sni4A1DiLco9gfqDOQsCdX&export=download'
     """
     if not os.path.exists(download_folder):
@@ -81,7 +81,7 @@ def main():
    
     model = create_model()
     
-    stopping_callback = EarlyStopping(monitor='val_loss', patience=10 )#,restore_best_weights=True
+    stopping_callback = EarlyStopping(monitor='val_loss', patience=5 ,restore_best_weights=True)
     
     checkpoint_callback = ModelCheckpoint(
         filepath=save_file,
@@ -91,13 +91,26 @@ def main():
         save_best_only=True)
    
     
-    opt = Adam(lr=1e-5)#0.0001
+    opt = Adam(lr=0.0009)#0.0001
     model.compile(loss='mse', metrics=['accuracy'], optimizer=opt)
     
     print('Train model')
-    model.fit_generator(generator=train_dataset, steps_per_epoch=len(train_dataset), epochs=epochs, validation_data=valid_dataset,  callbacks=[checkpoint_callback, stopping_callback ] , validation_steps = len(valid_dataset), verbose=1) #validation_data=validation_generator, use_multiprocessing=True,workers=6 
+    model.fit_generator(generator=train_dataset, steps_per_epoch=len(train_dataset), epochs=epochs, validation_data=valid_dataset,  callbacks=[checkpoint_callback, stopping_callback ] , validation_steps = len(valid_dataset), verbose=2, use_multiprocessing=True, workers=6 ) #validation_data=validation_generator, use_multiprocessing=True,workers=6 
     
-    #model.fit( train_dataset, validation_data=valid_dataset, epochs=epochs,  callbacks=[checkpoint_callback, stopping_callback ] , verbose=2,use_multiprocessing=True, workers=12) 
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model mean squared error loss')
+    plt.ylabel('mean squared error loss')
+    plt.xlabel('epoch')
+    plt.legend(['training set', 'validation set'], loc='upper right')
+    #plt.show()
+    plt.savefig(save_plot)
+    #plt.close(fig)
+
+    print('Running test dataset')
+    score, acc = model.evaluate(test_dataset, batch_size=batch_size,  verbose = 0)
+    print('Test score:', score)
+    print('Test accuracy:', acc)
  
         
 if __name__ == "__main__":
