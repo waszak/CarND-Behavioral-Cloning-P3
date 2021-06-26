@@ -5,8 +5,8 @@ from PIL import Image
 import cv2
 import numpy as np
 from utils import generate_shadow, random_shift
-
-
+import keras
+import math
 #Generator opens the image
 #Apply gausian blur
 #If we augment data then it randomize transformation
@@ -73,9 +73,9 @@ def create_dataset(images, measurements, batch_size):
     test_measurements = measurements[int(0.80 * len(measurements)): int(0.90 * len(measurements))]
     valid_measurements = measurements[int(0.90 * len(measurements)):]
     
-    train_dataset = DrivingDataset(train_images, train_measurements, batch_size, True)
-    valid_dataset = DrivingDataset(valid_images, valid_measurements, batch_size)
-    test_dataset =  DrivingDataset(test_images, test_measurements, batch_size)
+    train_dataset = generator(train_images, train_measurements, batch_size, True)
+    valid_dataset = generator(valid_images, valid_measurements, batch_size)
+    test_dataset =  generator(test_images, test_measurements, batch_size)
     return train_dataset, valid_dataset, test_dataset
 
 def parse_function(filename, label):
@@ -83,28 +83,64 @@ def parse_function(filename, label):
     image = tf.image.decode_jpeg(image_string, channels=3)
     return image, label
 
-def data_augmentation(x, y):
-    #seed = (1,2)
+def data_augmentation(x):
     x = tf.image.random_brightness(x, 0.10)
     x = tf.image.random_hue(x, 0.1) 
     x = tf.image.random_saturation(x, 0.7, 1.3)
     x = tf.image.random_contrast(x, 0.8, 1.2)
-    return x, y 
+    return x
 
-#not used
-def dataset(x, y, batch_size, augment=False):
-    ds =(
-            tf.data.Dataset.from_tensor_slices((x, y))
-            #.shuffle(len(images))
-            #.batch(batch_size)
-            .map(parse_function, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-            #.cache()
-            .shuffle(buffer_size=1000)
-            .batch(batch_size)
-        )
-    if augment:
-        ds = ds.map(lambda x, y: data_augmentation(x, y), 
-                num_parallel_calls=tf.data.experimental.AUTOTUNE).repeat(2)
+
+class DrivingDatasetGenerator(keras.utils.Sequence):
+    def __init__(self, x, y, batch_size=64, augment=False, repeat=1):
+        self.x = x
+        self.y = y
+        self.batch_size = batch_size
+        self.augment= augment
+        self.repeat = repeat
+        self.idx = []
+        self.augment = augment
+        if not augment:
+            repeat = 1
+    
+        self.on_epoch_end()
+    
+    def on_epoch_end(self):
+        idx = [ i for i in range(len(self.x))]
+        idxes = []
+        for i in range(self.repeat):
+            idx = shuffle(idx)
+            idxes.extend(idx)
+        self.idx = idxes
+    
+    def __len__(self):
+        return math.ceil((len(self.idx)) / self.batch_size) - 1
+    
+    def total_size(self):
+        return len(self.idx)
+   
+    def __getitem__(self, idx):
+        idxes = self.idx[idx * self.batch_size:(idx + 1) * self.batch_size]
+        idxes = shuffle(idxes)
+        batch_x = []
+        batch_y = []
+
         
-            
-    return ds.prefetch(tf.data.experimental.AUTOTUNE)
+        for i in idxes:
+            img = np.asarray(Image.open(self.x[i]))
+            yi = self.y[i]
+            img = cv2.GaussianBlur(img, (5, 5), 0)
+            if self.augment:
+                img, yi = random_shift(img, yi)
+                if random.random() <0.5:
+                    img = generate_shadow(img)
+                if random.random() <0.5:
+                    yi = -yi
+                    img = np.fliplr(img)
+            batch_x.append(img)
+            batch_y.append(yi)     
+        return np.array(batch_x) ,  np.array(batch_y) 
+
+
+def generator(x, y, batch_size, augment=False, repeat=1):
+    return DrivingDatasetGenerator(x, y, batch_size, augment, repeat = repeat)

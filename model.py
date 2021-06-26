@@ -12,12 +12,13 @@ from keras.optimizers import Adam
 from keras.models import load_model
 from keras import backend as K
 from utils import get_data, benchmark, generate_shadow, random_shift
-from dataset import create_dataset, DrivingDataset, dataset
+from dataset import create_dataset, DrivingDataset, data_augmentation
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 def create_model():
     model = Sequential()
-    model.add(Cropping2D(cropping=((70,25), (0,0)), input_shape=(160,320,3)))
+    model.add(Lambda(lambda x:data_augmentation(x), input_shape=(160,320,3)))
+    model.add(Cropping2D(cropping=((70,25), (0,0))))
     #model.add(Lambda(lambda x: (x / 127.5) - 1))
     model.add(Lambda(lambda x: (x - K.constant([123.68, 116.779, 103.939]))/K.constant([58.393, 57.12, 57.375])))
     model.add(Conv2D(24, (5, 5), strides=(2, 2), activation='relu', padding="same"))

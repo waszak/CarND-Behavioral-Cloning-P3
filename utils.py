@@ -53,7 +53,7 @@ def generate_shadow(image):
     #print(hull.vertices)
     hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
     cv2.fillConvexPoly(mask, np.int32([points]) , 255) 
-    shadow_ratio = random.uniform(0.4, 0.5)  
+    shadow_ratio = random.uniform(0.4, 0.6)  
     hls[:,:,1][mask[:, :, 0] == 255] = hls[:, : , 1][mask[:,:,0] == 255] *  shadow_ratio 
     return cv2.cvtColor(hls, cv2.COLOR_HLS2RGB) 
  
@@ -73,13 +73,14 @@ def get_data(path):
                
         
                 paths= [ os.path.join( os.path.join(csv_dir,'IMG'), os.path.basename(x.replace('\\',os.sep))) for x in row[0:3]]
-                #print(paths)
                 images.extend(paths)
                 shift = 0.25
-                measurements.append(float(row[3]))
-                measurements.append(float(row[3])+0.25)
-                measurements.append(float(row[3])-0.25)
-                num_rows +=3
+                ratio = float(row[3])                      
+                measurements.append(ratio)
+                measurements.append(ratio + 0.25)
+                measurements.append(ratio - 0.25)
+                num_rows += 3
+             
                 
     return num_rows, images, measurements
 

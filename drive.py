@@ -21,7 +21,8 @@ sio = socketio.Server()
 app = Flask(__name__)
 model = None
 prev_image_array = None
-
+def data_augmentation(x):
+    return x
 
 class SimplePIController:
     def __init__(self, Kp, Ki):
