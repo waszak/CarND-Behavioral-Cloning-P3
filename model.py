@@ -55,7 +55,7 @@ def main():
     batch_size = 32
     num_rows = 0
     epochs = 30
-    repeat_train_data = 2
+    repeat_train_data = 1
     save_file = 'model.h5'
     download_folder ='/opt'
     data_folder = '/opt/data'
@@ -82,14 +82,14 @@ def main():
    
     model = create_model()
     
-    stopping_callback = EarlyStopping(monitor='val_loss', patience=5 ,restore_best_weights=True)
+    stopping_callback = EarlyStopping(monitor='val_loss', patience=10 ,restore_best_weights=True)
     
     checkpoint_callback = ModelCheckpoint(
         filepath=save_file,
         save_weights_only=False,
         monitor='val_loss',
         mode='min',
-        save_best_only=True)
+        save_best_only=False)
    
     
     opt = Adam()#0.0001
@@ -107,11 +107,6 @@ def main():
     #plt.show()
     plt.savefig(save_plot)
     #plt.close(fig)
-
-    print('Running test dataset')
-    score, acc = model.evaluate(test_dataset, batch_size=batch_size,  verbose = 0)
-    print('Test score:', score)
-    print('Test accuracy:', acc)
  
         
 if __name__ == "__main__":
