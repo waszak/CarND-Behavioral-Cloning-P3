@@ -57,8 +57,8 @@ def main():
     epochs = 30
     repeat_train_data = 2
     save_file = 'model.h5'
-    #download_folder ='/opt'
-    data_folder = 'data'
+    download_folder ='/opt'
+    data_folder = '/opt/data'
     save_plot = os.path.join('examples', 'loss.png')
     url = 'https://drive.google.com/u/0/uc?id=1oAdtoz2emGilDOa-vAxGppVPj8HLukuU&export=download'
     """
