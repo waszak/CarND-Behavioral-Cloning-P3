@@ -17,14 +17,21 @@ def benchmark(dataset):
     print("Number of batches:", i)
 
 #when we shift image left or right we should also change steering by small number
+#0.00416 is constant picked by me.
+#Left/Right camera have about 60px shift compared to center image.
+#I use 0.25 as stering correction for left/right image.
+#Constant is derived from diving 0.25 by 60
+#I don't take into account top/bottom shifts. Its more to simulate move up/down hill.
 def random_shift(image, yi=0):
-    if random.random() < 0.5:
-        value = np.random.randint(-20,20)
-        M = np.float32([[1, 0, value ], [0, 1, 0]])
+    if random.random() < 0.7:
+        tx = np.random.randint(-60,60)
+        ty = np.random.randint(-10,10)
+        M = np.float32([[1, 0, tx ], [0, 1, ty]])
         #add random noise
-        yi -= (value/20)* random.random() * 0.1
+        #60px = 0.25
+        yi += 0.00416 * tx
     #elif random.random() < 0.5:
-    #    M = np.float32([[1, 0, 0], [0, 1, np.random.randint(-20,20)]])
+    #    M = np.float32([[1, 0, 0], [0, 1, ]])
     else:
         return image, yi
         
@@ -77,8 +84,8 @@ def get_data(path):
                 shift = 0.25
                 ratio = float(row[3])                      
                 measurements.append(ratio)
-                measurements.append(ratio + 0.25)
-                measurements.append(ratio - 0.25)
+                measurements.append(ratio + shift)
+                measurements.append(ratio - shift)
                 num_rows += 3
              
                 

@@ -11,7 +11,7 @@ import math
 #Apply gausian blur
 #If we augment data then it randomize transformation
 #50% for flip
-#50% for applying shadows
+#60% for applying shadows
 #
 
 class DrivingDatasetGenerator(keras.utils.Sequence):
@@ -58,14 +58,14 @@ class DrivingDatasetGenerator(keras.utils.Sequence):
             img = cv2.GaussianBlur(img, (5, 5), 0)
             if self.augment:
                 img, yi = random_shift(img, yi)
-                if random.random() <0.5:
+                if random.random() <0.6:
                     img = generate_shadow(img)
                 if random.random() <0.5:
                     yi = -yi
                     img = np.fliplr(img)
             batch_x.append(img)
             batch_y.append(yi)     
-        return np.array(batch_x) ,  np.array(batch_y) 
+        return np.array(batch_x, dtype=np.uint8) ,  np.array(batch_y, dtype=np.float32) 
 
 
 def generator(x, y, batch_size, augment=False, repeat=1):

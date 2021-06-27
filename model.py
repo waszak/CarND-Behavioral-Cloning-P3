@@ -55,10 +55,10 @@ def main():
     batch_size = 32
     num_rows = 0
     epochs = 30
-    repeat_train_data = 1
+    repeat_train_data = 2
     save_file = 'model.h5'
     #download_folder ='/opt'
-    data_folder = '/opt/data'
+    data_folder = 'data'
     save_plot = os.path.join('examples', 'loss.png')
     url = 'https://drive.google.com/u/0/uc?id=1oAdtoz2emGilDOa-vAxGppVPj8HLukuU&export=download'
     """
@@ -92,7 +92,7 @@ def main():
         save_best_only=True)
    
     
-    opt = Adam(lr=0.0009)#0.0001
+    opt = Adam()#0.0001
     model.compile(loss='mse', metrics=['accuracy'], optimizer=opt)
     
     print('Train model')
