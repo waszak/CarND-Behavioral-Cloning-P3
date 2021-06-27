@@ -1,3 +1,13 @@
+
+Track 1
+
+https://user-images.githubusercontent.com/3121149/123559293-6f2c2980-d79b-11eb-9d87-a2abaa04f095.mp4
+
+Track 2
+
+https://user-images.githubusercontent.com/3121149/123559333-a995c680-d79b-11eb-80cc-d40ebfcb10f3.mp4
+
+
 # **Behavioral Cloning** 
 
 ## Writeup Template
@@ -295,16 +305,27 @@ class DrivingDataset(tf.data.Dataset):
             ds = ds.map(lambda x, y : data_augmentation(x, y), 
                     num_parallel_calls=tf.data.experimental.AUTOTUNE)
        
-```      
+```  
+I used dataset augumentation like flipinging, translation, random shadows, color saturation, gausian blur, and more.
+
+Image from dataset.
 
 ![alt text][image3]
+Image with agumented shadows.
+
 ![alt text][image4]
+Image with augumented shadows and flipped.
+
 ![alt text][image5]
 
+Shifted image with shadows
+
+![alt text][image6]
 
 
 I used 30 epochs because of the time to train each epoch and it was close to optimal number of epochs. It needs about 20-30 epochs to learn second track.
 Training loss was higher because of dropout layers and data augumentation. When i used less regularization it needs about 8 epochs.
+
 ![alt text][image2]
 
-I used an adam optimizer so that manually training the learning rate wasn't necessary.
+I used an adam optimizer and after trying multiple learning rates i decided default one was good enough.
